@@ -12,13 +12,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.example.API.Analitica.usuario.dto.UsuarioActualizarDTO;
 import com.example.API.Analitica.usuario.dto.UsuarioCrearDTO;
 import com.example.API.Analitica.usuario.dto.UsuarioDTO;
-import com.example.API.Analitica.usuario.modelo.UsuarioModelo;
-import com.example.API.Analitica.usuario.repositorio.UsuarioRepositorio;
+import com.example.API.Analitica.usuario.servicio.UsuarioServicio;
 
 import jakarta.validation.Valid;
 
@@ -26,70 +24,36 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1/usuarios")
 public class UsuarioControlador {
 
-	private final UsuarioRepositorio usuarioRepositorio;
+	private final UsuarioServicio usuarioServicio;
 
-	public UsuarioControlador(UsuarioRepositorio usuarioRepositorio) {
-		this.usuarioRepositorio = usuarioRepositorio;
+	public UsuarioControlador(UsuarioServicio usuarioServicio) {
+		this.usuarioServicio = usuarioServicio;
 	}
 
 	@PostMapping
-	public ResponseEntity<UsuarioDTO> crear(@Valid @RequestBody UsuarioCrearDTO body) {
-		if (usuarioRepositorio.existsByCorreoIgnoreCase(body.getCorreo())) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese correo");
-		}
-
-		UsuarioModelo u = new UsuarioModelo();
-		u.setNombre(body.getNombre());
-		u.setCorreo(body.getCorreo());
-		u.setContrasena(body.getContrasena());
-		u.setRol(body.getRol());
-
-		UsuarioModelo saved = usuarioRepositorio.save(u);
-		return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(saved));
+	public ResponseEntity<UsuarioDTO> crear(@Valid @RequestBody UsuarioCrearDTO solicitud) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(usuarioServicio.crear(solicitud));
 	}
 
 	@GetMapping
 	public List<UsuarioDTO> listar() {
-		return usuarioRepositorio.findAll().stream().map(this::toDTO).toList();
+		return usuarioServicio.listar();
 	}
 
 	@GetMapping("/{id}")
 	public UsuarioDTO obtener(@PathVariable Long id) {
-		UsuarioModelo u = usuarioRepositorio.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
-		return toDTO(u);
+		return usuarioServicio.obtener(id);
 	}
 
 	@PutMapping("/{id}")
-	public UsuarioDTO actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioActualizarDTO body) {
-		UsuarioModelo u = usuarioRepositorio.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
-
-		if (!u.getCorreo().equalsIgnoreCase(body.getCorreo())
-				&& usuarioRepositorio.existsByCorreoIgnoreCase(body.getCorreo())) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese correo");
-		}
-
-		u.setNombre(body.getNombre());
-		u.setCorreo(body.getCorreo());
-		u.setContrasena(body.getContrasena());
-		u.setRol(body.getRol());
-
-		UsuarioModelo saved = usuarioRepositorio.save(u);
-		return toDTO(saved);
+	public UsuarioDTO actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioActualizarDTO solicitud) {
+		return usuarioServicio.actualizar(id, solicitud);
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-		if (!usuarioRepositorio.existsById(id)) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
-		}
-		usuarioRepositorio.deleteById(id);
+		usuarioServicio.eliminar(id);
 		return ResponseEntity.noContent().build();
-	}
-
-	private UsuarioDTO toDTO(UsuarioModelo u) {
-		return new UsuarioDTO(u.getId(), u.getNombre(), u.getCorreo(), u.getRol());
 	}
 }
 

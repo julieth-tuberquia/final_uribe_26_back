@@ -37,18 +37,18 @@ public class ResultadoAnalisisControlador {
 
 	@PostMapping("/usuarios/{usuarioId}/analisis")
 	public ResponseEntity<ResultadoAnalisisDTO> crear(@PathVariable Long usuarioId,
-			@Valid @RequestBody ResultadoAnalisisCrearDTO body) {
+			@Valid @RequestBody ResultadoAnalisisCrearDTO solicitud) {
 		UsuarioModelo usuario = usuarioRepositorio.findById(usuarioId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-		ResultadoAnalisisModelo r = new ResultadoAnalisisModelo();
-		r.setUsuario(usuario);
-		r.setScore(body.getScore());
-		r.setEtiqueta(body.getEtiqueta());
-		r.setComentario(body.getComentario());
+		ResultadoAnalisisModelo resultado = new ResultadoAnalisisModelo();
+		resultado.setUsuario(usuario);
+		resultado.setScore(solicitud.getScore());
+		resultado.setEtiqueta(solicitud.getEtiqueta());
+		resultado.setComentario(solicitud.getComentario());
 
-		ResultadoAnalisisModelo saved = resultadoAnalisisRepositorio.save(r);
-		return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(saved));
+		ResultadoAnalisisModelo resultadoGuardado = resultadoAnalisisRepositorio.save(resultado);
+		return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(resultadoGuardado));
 	}
 
 	@GetMapping("/usuarios/{usuarioId}/analisis")
